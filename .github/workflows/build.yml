@@ -171,13 +171,39 @@ jobs:
           M3SB_PACKAGE_TOKEN: ${{ secrets.M3SB_PACKAGE_TOKEN }}
           M3SB_HMAC_SECRET: ${{ secrets.M3SB_HMAC_SECRET }}
 
-      - name: Publish IPA release asset
+      - name: Encrypt IPA for private delivery
+        run: |
+          set -euo pipefail
+          PASSPHRASE_FILE="$RUNNER_TEMP/vesper-ipa-passphrase"
+          CIPHER="build/VESPER-Build-49-unsigned.ipa.enc"
+          WRAPPED_KEY="build/VESPER-Build-49-unsigned.ipa.key.enc"
+          MAC_FILE="build/VESPER-Build-49-unsigned.ipa.hmac"
+          openssl rand -hex 32 > "$PASSPHRASE_FILE"
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 250000 \
+            -pass "file:$PASSPHRASE_FILE" \
+            -in build/VESPER-Build-49-unsigned.ipa -out "$CIPHER"
+          openssl pkeyutl -encrypt -pubin -inkey .github/ipa-transfer-public.pem \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+            -in "$PASSPHRASE_FILE" -out "$WRAPPED_KEY"
+          python3 - "$PASSPHRASE_FILE" "$CIPHER" "$MAC_FILE" <<'PY'
+          import hashlib, hmac, sys
+          from pathlib import Path
+          key = bytes.fromhex(Path(sys.argv[1]).read_text().strip())
+          ciphertext = Path(sys.argv[2]).read_bytes()
+          Path(sys.argv[3]).write_text(hmac.new(key, ciphertext, hashlib.sha256).hexdigest() + "\n")
+          PY
+          rm -f "$PASSPHRASE_FILE"
+
+      - name: Publish encrypted delivery bundle
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="sakk-external-build-${GITHUB_RUN_ID}"
-          gh release create "$TAG" build/VESPER-Build-49-unsigned.ipa \
+          TAG="sakk-external-encrypted-${GITHUB_RUN_ID}"
+          gh release create "$TAG" \
+            build/VESPER-Build-49-unsigned.ipa.enc \
+            build/VESPER-Build-49-unsigned.ipa.key.enc \
+            build/VESPER-Build-49-unsigned.ipa.hmac \
             --repo "$GITHUB_REPOSITORY" \
-            --title "VESPER Build ${GITHUB_RUN_ID}" \
-            --notes "Unsigned VESPER IPA built from ${GITHUB_SHA}." \
+            --title "VESPER encrypted delivery ${GITHUB_RUN_ID}" \
+            --notes "Encrypted transport files for a private IPA delivery. Built from ${GITHUB_SHA}." \
             --target "$GITHUB_SHA"

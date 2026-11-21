@@ -760,6 +760,35 @@ struct ContentView: View {
                 .foregroundStyle(AppTheme.paper.opacity(0.62))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 10)
+            if appState.kernelExploitApplicable {
+                Text("Kernel status: \(appState.exploitStatus.displayText)")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.paper.opacity(0.72))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    appState.runKernelExploitIfNeeded()
+                } label: {
+                    HStack(spacing: 8) {
+                        if appState.kernelExploitRunning {
+                            ProgressView().tint(AppTheme.ink)
+                        }
+                        Text(appState.kernelExploitRunning ? "STARTING…" : (appState.exploitStatus.isFailed ? "RELAUNCH TO RETRY" : "START DEVICE EXPLOIT"))
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .tracking(0.6)
+                    }
+                    .foregroundStyle(AppTheme.ink)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(AppTheme.secondaryAccent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(appState.kernelExploitRunning || appState.exploitStatus.isSuccess || appState.exploitStatus.isFailed)
+                Text("Starting may briefly freeze or restart the device. Only continue on a supported device.")
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.paper.opacity(0.56))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(16)
         .background(AppTheme.referenceCard, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
