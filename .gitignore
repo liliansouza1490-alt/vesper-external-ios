@@ -1,0 +1,17 @@
+# Local M3SB credentials — never commit real package tokens or HMAC secrets.
+pi/M3SB_API_Config.json
+
+# Python test/runtime artifacts.
+__pycache__/
+*.py[cod]
+
+# Generated Xcode archives and unsigned IPA artifacts.
+build/
+
+pi/M3SB_Target_Info.plist
+.env
+.env.*
+!.env.example
+*.ipa
+*.mobileprovision
+*.p12

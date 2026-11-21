@@ -1,0 +1,12 @@
+{
+  "sdk_version": "1.1.0",
+  "api_base_url": "https://api.m3sbapi.shop",
+  "package_id": 93,
+  "package_name": "external",
+  "telegram_username": "YAGAMIXIOS",
+  "token": "REPLACE_WITH_M3SB_PACKAGE_TOKEN",
+  "hmac_secret": "REPLACE_WITH_M3SB_HMAC_SECRET",
+  "signature_version": 3,
+  "free_version": "package-controlled",
+  "target_bundle_id": "com.apple.mobile.MobileHouseArrest"
+}
